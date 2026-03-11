@@ -1,4 +1,4 @@
-# Cryptography Module
+# Maatify Crypto
 
 [![Latest Version](https://img.shields.io/packagist/v/maatify/crypto.svg?style=for-the-badge)](https://packagist.org/packages/maatify/crypto)
 [![PHP Version](https://img.shields.io/packagist/php-v/maatify/crypto.svg?style=for-the-badge)](https://packagist.org/packages/maatify/crypto)
@@ -12,93 +12,414 @@
 ![Monthly Downloads](https://img.shields.io/packagist/dm/maatify/crypto?label=Monthly%20Downloads&color=00A8E8)
 ![Total Downloads](https://img.shields.io/packagist/dt/maatify/crypto?label=Total%20Downloads&color=2AA9E0)
 
+[![Security Audit](https://img.shields.io/badge/Security-Audited-green?style=for-the-badge)](SECURITY_AUDIT.md)
+
 ![Security First](https://img.shields.io/badge/Security-Cryptography-darkred?style=for-the-badge)
 ![Maatify Ecosystem](https://img.shields.io/badge/Maatify-Ecosystem-blueviolet?style=for-the-badge)
 
 [![Install](https://img.shields.io/badge/Install-composer%20require-blue?style=for-the-badge)](https://packagist.org/packages/maatify/crypto)
 
-## 1. Overview
+---
 
-This module is a **Security-First cryptographic system** providing a set of strict, isolated, and frozen cryptographic primitives. It is designed to be extracted as a standalone library, independent of any specific application framework.
+# Installation
+
+```bash
+composer require maatify/crypto
+````
+
+---
+
+# Quick Example
+
+```php
+use Maatify\Crypto\DX\CryptoProvider;
+
+$crypto = $container->get(CryptoProvider::class);
+
+$service = $crypto->context("user:email:v1");
+
+$cipher = $service->encrypt("hello world");
+
+$plain = $service->decrypt($cipher);
+```
+
+---
+
+# Documentation
+
+For full documentation and detailed usage guides, see the official documentation book:
+
+➡️ **[Documentation Book](docs/book/index.md)**
+
+The documentation includes:
+
+- Architecture overview
+- Key rotation lifecycle
+- Context-based encryption
+- Password hashing pipeline
+- Security design guarantees
+- Integration examples
+
+---
+
+# 1. Overview
+
+This library is a **Security-First cryptographic system** providing a set of strict, isolated, and frozen cryptographic primitives. It is designed to be extracted as a standalone library, independent of any specific application framework.
 
 The system enforces a **strict separation of concerns** between key lifecycle management, key derivation, reversible encryption, and password hashing. It prioritizes **safety, deterministic behavior, and fail-closed security** over developer convenience.
 
-All cryptographic primitives within this module are **frozen**, meaning their core logic, algorithms, and security boundaries are immutable. Any significant change to these primitives requires a formal architectural review.
+All cryptographic primitives within this library are **frozen**, meaning their core logic, algorithms, and security boundaries are immutable. Any significant change to these primitives requires a formal architectural review.
 
-## 2. Module Breakdown
+---
 
-The cryptographic system is composed of five distinct, decoupled modules:
+# Cryptographic Design
 
-### 1. Password Module (`Password/`)
-- **Purpose:** Secure, irreversible password hashing and verification.
-- **What it DOES:** Implements a strict pipeline of **HMAC-SHA256 (Pepper) → Argon2id**. It handles hashing, verification, and rehash checks.
-- **What it DOES NOT do:** It does not manage the storage of hashes or the retrieval of the pepper secret.
-- **Security Boundary:** It operates in total isolation from encryption keys. It relies on an injected `PasswordPepperProviderInterface`.
+The library follows modern cryptographic best practices:
 
-### 2. KeyRotation Module (`KeyRotation/`)
-- **Purpose:** Management of cryptographic key lifecycles and rotation policies.
-- **What it DOES:** Enforces strict invariants: exactly one **ACTIVE** key at any time. It manages key states (Active, Inactive, Retired) to support seamless key rotation without downtime.
-- **What it DOES NOT do:** It does not perform any encryption or decryption. It does not load keys from storage (DB, Vault, Env).
-- **Security Boundary:** It is the sole authority on *which* key is valid for new encryption operations.
+* AES-256-GCM authenticated encryption
+* HKDF domain separation (RFC 5869)
+* Argon2id password hashing
+* Secure randomness via `random_bytes()`
+* Strict key rotation lifecycle (Active / Inactive / Retired)
+* Fail-closed cryptographic operations
 
-### 3. HKDF Module (`HKDF/`)
-- **Purpose:** Key Derivation Function (RFC 5869) for domain separation.
-- **What it DOES:** Derives cryptographically independent keys from a root key based on explicit, versioned context strings (e.g., `notification:email:v1`).
-- **What it DOES NOT do:** It does not generate root secrets or perform encryption.
-- **Security Boundary:** Ensures that a compromise of one domain's key (e.g., email notifications) cannot be used to decrypt data from another domain (e.g., authentication tokens).
+---
 
-### 4. Reversible Module (`Reversible/`)
-- **Purpose:** Symmetric encryption and decryption (AES-256-GCM).
-- **What it DOES:** Provides a strict interface for encrypting data and decrypting it back to its original form.
-- **What it DOES NOT do:** It does not manage keys. It relies on keys provided by the caller (typically via KeyRotation or HKDF).
-- **Security Boundary:** It is fail-closed. It will throw exceptions for any failure (integrity check, missing key, invalid algorithm). It strictly forbids weak algorithms like ECB.
+# 2. Library Breakdown
 
-### 5. DX Module (`DX/`)
-- **Purpose:** Developer Experience and Orchestration.
-- **What it DOES:** Acts as a glue layer to wire the strict primitives into usable pipelines. It provides a `CryptoProvider` facade for consumers.
-- **What it DOES NOT do:** It implements **no** cryptographic logic. It is purely for orchestration.
-- **Security Boundary:** It is an optional convenience layer. The security guarantees reside in the underlying modules.
+The cryptographic system is composed of five distinct, decoupled components:
 
-## 3. Architectural Flow
+---
 
-The module supports three primary security pipelines:
+## 1. Password Component (`Password/`)
 
-### A. Password Hashing Pipeline
-Used for authenticating users.
-`Input Password` → `HMAC-SHA256 (Global Pepper)` → `Argon2id (Salted)` → `Hash`
+**Purpose:** Secure, irreversible password hashing and verification.
 
-### B. Context-Based Encryption Pipeline (Recommended)
-Used for protecting sensitive data with domain separation.
-`Root Keys (KeyRotation)` → `HKDF (Context String)` → `Derived Keys` → `AES-256-GCM (Reversible)`
+**What it DOES**
 
-### C. Direct Encryption Pipeline (Advanced)
-Used strictly for internal system secrets where domain separation is not applicable.
-`Root Keys (KeyRotation)` → `AES-256-GCM (Reversible)`
+Implements a strict pipeline of:
 
-**Key Hierarchy:**
-- **Root Keys:** Managed by `KeyRotation`. Never used directly for domain data in the standard pipeline.
-- **Derived Keys:** Ephemeral keys generated by `HKDF`. Used for actual encryption.
-- **Password Secrets:** The "Pepper" is completely isolated from encryption keys.
+```
+HMAC-SHA256 (Pepper) → Argon2id
+```
 
-## 4. Design Principles
+Handles:
 
-- **Fail-Closed Behavior:** All modules throw exceptions on error. There are no silent failures, no "false" returns, and no fallbacks to insecure defaults.
-- **Explicit Versioning:** Contexts and keys are explicitly versioned. Implicit defaults are forbidden.
-- **Domain Separation:** Different types of data must use different cryptographic contexts.
-- **Key Rotation Safety:** The system is designed to support key rotation natively. Old keys remain available for decryption (until revoked), while new data is always encrypted with the active key.
-- **No Implicit Defaults:** Algorithms, keys, and contexts must be explicitly defined.
-- **No Hidden State:** The modules are stateless. They do not hold state between requests and do not cache secrets internally.
+* hashing
+* verification
+* rehash checks
 
-## 5. What This Module Is NOT
+**What it DOES NOT do**
 
-- **Not a Framework:** It does not depend on Laravel, Symfony, or any other framework.
-- **Not a Key Management System (KMS):** It does not store keys. It requires a provider to inject keys from an external source (Env, Vault, DB).
-- **Not a Secrets Loader:** It does not read `.env` files. Secret loading is the responsibility of the host application.
-- **Not a Crypto Abstraction DSL:** It exposes specific, approved primitives (AES-GCM, Argon2id, HKDF). It does not try to abstract "crypto" into a generic driver model.
+* manage storage of hashes
+* retrieve pepper secrets
 
-## 6. Stability & Extraction Readiness
+**Security Boundary**
 
-This module is **Production-Ready** and designed for extraction as a standalone library.
+Operates in total isolation from encryption keys and relies on:
 
-- **Frozen Components:** The `Password`, `KeyRotation`, `HKDF`, and `Reversible` modules are effectively frozen. Their interfaces and behaviors are locked.
-- **Optional Components:** The `DX` layer is an optional convenience wrapper. Consumers can choose to wire the primitives manually if they require custom behavior.
+```
+PasswordPepperProviderInterface
+```
+
+---
+
+## 2. KeyRotation Module (`KeyRotation/`)
+
+**Purpose:** Management of cryptographic key lifecycles and rotation policies.
+
+**What it DOES**
+
+Enforces strict invariants:
+
+```
+exactly one ACTIVE key at any time
+```
+
+Manages key states:
+
+* ACTIVE
+* INACTIVE
+* RETIRED
+
+This allows seamless key rotation without downtime.
+
+**What it DOES NOT do**
+
+* perform encryption or decryption
+* load keys from storage
+
+**Security Boundary**
+
+Acts as the sole authority on **which key may encrypt new data**.
+
+---
+
+## 3. HKDF Module (`HKDF/`)
+
+**Purpose:** Key Derivation Function implementing **RFC 5869**.
+
+**What it DOES**
+
+Derives independent keys from a root key using **explicit contexts**.
+
+Example contexts:
+
+```
+notification:email:v1
+auth:session:v1
+payment:token:v1
+```
+
+**What it DOES NOT do**
+
+* generate root secrets
+* perform encryption
+
+**Security Boundary**
+
+Ensures compromise of one domain **cannot affect another**.
+
+---
+
+## 4. Reversible Module (`Reversible/`)
+
+**Purpose:** Symmetric encryption and decryption.
+
+Algorithm:
+
+```
+AES-256-GCM
+```
+
+**What it DOES**
+
+* encrypt data
+* decrypt data
+
+**What it DOES NOT do**
+
+* manage keys
+* derive keys
+
+**Security Boundary**
+
+Fail-closed behavior:
+
+* invalid tag → exception
+* corrupted ciphertext → exception
+* unsupported algorithm → exception
+
+Weak algorithms like **ECB are explicitly forbidden**.
+
+---
+
+## 5. DX Module (`DX/`)
+
+**Purpose:** Developer Experience orchestration layer.
+
+Provides the `CryptoProvider` facade.
+
+Example:
+
+```php
+$crypto->context("user:email:v1");
+```
+
+**What it DOES**
+
+Connects primitives into usable pipelines.
+
+**What it DOES NOT do**
+
+Contains **no cryptographic logic**.
+
+All security guarantees exist in the lower layers.
+
+---
+
+# 3. Architectural Flow
+
+The library supports three secure pipelines.
+
+---
+
+## A. Password Hashing Pipeline
+
+Used for authentication.
+
+```
+Input Password
+   ↓
+HMAC-SHA256 (Pepper)
+   ↓
+Argon2id (Salted)
+   ↓
+Password Hash
+```
+
+---
+
+## B. Context-Based Encryption Pipeline (Recommended)
+
+Used for sensitive application data.
+
+```
+Root Keys (KeyRotation)
+       ↓
+HKDF (Context)
+       ↓
+Derived Keys
+       ↓
+AES-256-GCM Encryption
+```
+
+---
+
+## C. Direct Encryption Pipeline (Advanced)
+
+Used only for internal system secrets.
+
+```
+Root Keys (KeyRotation)
+       ↓
+AES-256-GCM
+```
+
+---
+
+# Key Hierarchy
+
+**Root Keys**
+
+Managed by KeyRotation.
+
+Never used directly for domain data in the standard pipeline.
+
+**Derived Keys**
+
+Generated via HKDF.
+
+Used for actual encryption.
+
+**Password Secrets**
+
+Pepper is **fully isolated** from encryption keys.
+
+---
+
+# 4. Design Principles
+
+**Fail-Closed Behavior**
+
+All modules throw exceptions on failure.
+
+No silent failures.
+No fallback algorithms.
+
+---
+
+**Explicit Versioning**
+
+Contexts must be versioned.
+
+Example:
+
+```
+auth:token:v1
+```
+
+---
+
+**Domain Separation**
+
+Different data domains must use different contexts.
+
+---
+
+**Key Rotation Safety**
+
+Old keys remain valid for decryption while new data always uses the active key.
+
+---
+
+**No Implicit Defaults**
+
+Algorithms, keys, and contexts must always be explicit.
+
+---
+
+**No Hidden State**
+
+Modules are stateless.
+
+They do not cache secrets or persist runtime state.
+
+---
+
+# 5. What This Library Is NOT
+
+**Not a Framework**
+
+No dependency on Laravel, Symfony, etc.
+
+---
+
+**Not a Key Management System**
+
+Does not store keys.
+
+Keys must be injected by the host application.
+
+---
+
+**Not a Secrets Loader**
+
+Does not read `.env`.
+
+Secret management belongs to the host application.
+
+---
+
+**Not a Generic Crypto DSL**
+
+The library intentionally exposes **specific approved primitives** only:
+
+* AES-256-GCM
+* Argon2id
+* HKDF
+
+No driver abstraction.
+
+---
+
+# 6. Stability & Extraction Readiness
+
+This library is **production-ready**.
+
+It was designed from the start to be **extractable as a standalone package**.
+
+---
+
+**Frozen Components**
+
+* Password
+* KeyRotation
+* HKDF
+* Reversible
+
+Their security contracts are locked.
+
+---
+
+**Optional Components**
+
+DX layer is optional.
+
+Consumers may wire primitives manually.
+
+---
+
+# Stability
+
+This library is production-ready and follows **Semantic Versioning**.
