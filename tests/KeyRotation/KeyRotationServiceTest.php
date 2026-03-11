@@ -21,8 +21,8 @@ class KeyRotationServiceTest extends TestCase
     {
         $keys = [
             new CryptoKeyDTO('key_1', str_repeat('A', 32), KeyStatusEnum::ACTIVE, new \DateTimeImmutable()),
-            new CryptoKeyDTO('key_2', str_repeat('A', 32), KeyStatusEnum::INACTIVE, new \DateTimeImmutable()),
-            new CryptoKeyDTO('key_3', str_repeat('A', 32), KeyStatusEnum::RETIRED, new \DateTimeImmutable()),
+            new CryptoKeyDTO('key_2', str_repeat('B', 32), KeyStatusEnum::INACTIVE, new \DateTimeImmutable()),
+            new CryptoKeyDTO('key_3', str_repeat('C', 32), KeyStatusEnum::RETIRED, new \DateTimeImmutable()),
         ];
 
         $this->provider = new InMemoryKeyProvider($keys);

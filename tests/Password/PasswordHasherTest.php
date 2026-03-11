@@ -58,7 +58,7 @@ class PasswordHasherTest extends TestCase
         $oldHasher = new PasswordHasher($this->pepperProvider, $oldPolicy);
         $hash = $oldHasher->hash('password');
 
-        $newPolicy = new ArgonPolicyDTO(memoryCost: 2048, timeCost: 2, threads: 2);
+        $newPolicy = new ArgonPolicyDTO(memoryCost: 2048, timeCost: 1, threads: 1);
         $newHasher = new PasswordHasher($this->pepperProvider, $newPolicy);
 
         $this->assertTrue($newHasher->needsRehash($hash));
