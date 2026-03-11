@@ -2,33 +2,134 @@
 
 ## Supported Versions
 
-Currently, only the latest major version of the Crypto module receives security updates.
+Only the latest major version of **maatify/crypto** receives security updates.
 
-| Version | Supported          |
-| ------- | ------------------ |
-| 1.x     | :white_check_mark: |
+| Version | Supported |
+| ------- | ---------- |
+| 1.x     | ✅ |
+
+---
 
 ## Cryptographic Guarantees
 
-This module provides the following strict cryptographic guarantees:
+The library provides the following strict cryptographic guarantees:
 
-1.  **Authenticated Encryption (AEAD):** All reversible encryption uses AEAD algorithms (e.g., XChaCha20-Poly1305 or AES-256-GCM). Data cannot be tampered with without detection.
-2.  **Domain Separation (HKDF):** Context-based encryption derives unique, independent keys for different domains (contexts). A compromised key in one domain does not compromise data in another.
-3.  **Secure Password Hashing:** Passwords are hashed using state-of-the-art algorithms (Argon2id) and support an optional, highly recommended global pepper (HMAC-SHA256) to mitigate offline attacks.
-4.  **Fail-Closed Design:** Any cryptographic failure (e.g., missing keys, invalid tags, malformed data, unsupported algorithms) results in an immediate exception. The module will never fall back to an insecure state or return partial/corrupted data.
-5.  **Seamless Key Rotation:** The system supports multiple keys with distinct states (Active, Inactive, Retired) to allow seamless decryption of legacy data while ensuring new data is always encrypted with the current Active key.
+1. **Authenticated Encryption (AEAD)**
+   All reversible encryption uses modern AEAD algorithms.
+   The default implementation uses **AES-256-GCM**, ensuring confidentiality and integrity.
+   Any modification of ciphertext or metadata is detected during decryption.
 
-## Safe Usage Warnings
+2. **Domain Separation (HKDF)**
+   Context-based encryption derives unique keys using **HKDF (RFC 5869)**.
+   Each context (e.g. `auth:session:v1`) produces an independent encryption key, preventing cross-domain compromise.
 
--   **Protect Your Root Keys and Peppers:** The security of this module depends entirely on the secrecy of your injected root keys and password peppers. Do not hardcode them. Store them securely (e.g., in a secrets manager or environment variables) and inject them at runtime.
--   **Use Contexts (`cryptoProvider->context(...)`) over Direct Encryption:** Always prefer context-based encryption to ensure proper domain separation. Only use direct encryption (`cryptoProvider->direct(...)`) if you have a specific, justifiable reason to bypass HKDF.
--   **Do Not Ignore Exceptions:** Ensure your application handles exceptions thrown by the Crypto module gracefully. A thrown exception indicates a serious security condition (e.g., attempted tampering, missing key).
--   **Do Not Modify Core Algorithms:** The core algorithms and primitives are intentionally locked down. Do not attempt to bypass them or introduce custom, unverified cryptographic logic.
+3. **Secure Password Hashing**
+   Passwords are hashed using **Argon2id**.
+   The system supports an optional but highly recommended **global pepper** applied via HMAC-SHA256 before hashing.
+
+4. **Fail-Closed Design**
+   Any cryptographic failure results in an **immediate exception**.
+   The library never:
+   - falls back to weaker algorithms
+   - silently ignores failures
+   - returns partially decrypted data
+
+5. **Key Rotation Safety**
+   The system supports multiple keys with lifecycle states:
+   - **ACTIVE** – used for encryption
+   - **INACTIVE** – preserved for decryption
+   - **RETIRED** – legacy decryption only
+
+   Exactly one key must always be **ACTIVE**.
+
+---
+
+## Safe Usage Guidelines
+
+### Protect Your Root Keys and Peppers
+
+The security of this library depends entirely on the secrecy of:
+
+- encryption root keys
+- password peppers
+
+Never hardcode them in source code.
+
+Use secure storage mechanisms such as:
+
+- environment variables
+- secret managers
+- vault systems
+
+---
+
+### Prefer Context-Based Encryption
+
+Always prefer:
+
+```php
+$crypto->context("domain:entity:v1");
+````
+
+This ensures proper **HKDF domain separation**.
+
+Direct encryption:
+
+```php
+$crypto->direct();
+```
+
+bypasses HKDF and should only be used for:
+
+* infrastructure secrets
+* internal system encryption
+* controlled environments where domain separation is unnecessary
+
+---
+
+### Always Handle Exceptions
+
+Cryptographic operations may throw exceptions when:
+
+* ciphertext is corrupted
+* authentication tags fail
+* keys are missing
+* metadata is invalid
+
+These exceptions indicate **security-relevant conditions** and must never be ignored.
+
+---
+
+### Do Not Modify Cryptographic Primitives
+
+The algorithms and primitives in this library are intentionally restricted.
+
+Do **not**:
+
+* replace algorithms
+* add fallback ciphers
+* inject custom crypto logic
+
+Doing so may introduce severe vulnerabilities.
+
+---
 
 ## Reporting a Vulnerability
 
-If you discover a security vulnerability within this module, please report it immediately.
+If you discover a security vulnerability in **maatify/crypto**, please report it responsibly.
 
-**Do not open a public issue.**
+**Do not open a public GitHub issue.**
 
-Please send an email to the security contact for this repository. We will acknowledge receipt of your vulnerability report and strive to send you regular updates about our progress. If you do not receive a response within 48 hours, please follow up.
+Instead, send a report to:
+
+```
+security@maatify.com
+```
+
+Please include:
+
+* description of the vulnerability
+* steps to reproduce
+* affected versions
+
+We will acknowledge receipt within **48 hours** and work with you to resolve the issue responsibly.
