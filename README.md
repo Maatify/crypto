@@ -33,14 +33,25 @@ composer require maatify/crypto
 
 ```php
 use Maatify\Crypto\DX\CryptoProvider;
+use Maatify\Crypto\Reversible\DTO\ReversibleCryptoMetadataDTO;
 
 $crypto = $container->get(CryptoProvider::class);
 
 $service = $crypto->context("user:email:v1");
 
-$cipher = $service->encrypt("hello world");
+$encrypted = $service->encrypt("hello world");
 
-$plain = $service->decrypt($cipher);
+$metadata = new ReversibleCryptoMetadataDTO(
+    $encrypted['result']->iv,
+    $encrypted['result']->tag
+);
+
+$plain = $service->decrypt(
+    $encrypted['result']->cipher,
+    $encrypted['key_id'],
+    $encrypted['algorithm'],
+    $metadata
+);
 ```
 
 ---
