@@ -2,7 +2,7 @@
 
 [![Latest Version](https://img.shields.io/packagist/v/maatify/crypto.svg?style=for-the-badge)](https://packagist.org/packages/maatify/crypto)
 [![PHP Version](https://img.shields.io/packagist/php-v/maatify/crypto.svg?style=for-the-badge)](https://packagist.org/packages/maatify/crypto)
-[![License](https://img.shields.io/packagist/l/maatify/crypto.svg?style=for-the-badge)](LICENSE)
+[![License](https://img.shields.io/github/license/Maatify/crypto?style=for-the-badge)](LICENSE)
 
 ![PHPStan](https://img.shields.io/badge/PHPStan-Level%20Max-4E8CAE)
 
@@ -33,14 +33,25 @@ composer require maatify/crypto
 
 ```php
 use Maatify\Crypto\DX\CryptoProvider;
+use Maatify\Crypto\Reversible\DTO\ReversibleCryptoMetadataDTO;
 
 $crypto = $container->get(CryptoProvider::class);
 
 $service = $crypto->context("user:email:v1");
 
-$cipher = $service->encrypt("hello world");
+$encrypted = $service->encrypt("hello world");
 
-$plain = $service->decrypt($cipher);
+$metadata = new ReversibleCryptoMetadataDTO(
+    $encrypted['result']->iv,
+    $encrypted['result']->tag
+);
+
+$plain = $service->decrypt(
+    $encrypted['result']->cipher,
+    $encrypted['key_id'],
+    $encrypted['algorithm'],
+    $metadata
+);
 ```
 
 ---
