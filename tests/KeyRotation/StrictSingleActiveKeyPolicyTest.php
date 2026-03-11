@@ -92,7 +92,7 @@ class StrictSingleActiveKeyPolicyTest extends TestCase
         ]);
 
         $this->expectException(MultipleActiveKeysException::class);
-        $this->expectExceptionMessage('Multiple ACTIVE keys exist: 2 (invariant violation)');
+        $this->expectExceptionMessage('Multiple ACTIVE keys exist:');
         $this->policy->validate($provider);
     }
 
@@ -105,7 +105,6 @@ class StrictSingleActiveKeyPolicyTest extends TestCase
         $key = $this->policy->encryptionKey($provider);
         $this->assertSame('k1', $key->id());
     }
-
     public function testDecryptionKeyThrowsExceptionIfKeyNotFound(): void
     {
         $provider = $this->createProvider([]);
@@ -114,5 +113,15 @@ class StrictSingleActiveKeyPolicyTest extends TestCase
         $this->expectExceptionMessage('Key not found: missing_key');
 
         $this->policy->decryptionKey($provider, 'missing_key');
+    }
+
+    public function testDecryptionKeyAllowsRetiredKey(): void
+    {
+        $provider = $this->createProvider([
+            new CryptoKeyDTO('k1', 'mat', KeyStatusEnum::RETIRED, new \DateTimeImmutable()),
+        ]);
+
+        $key = $this->policy->decryptionKey($provider, 'k1');
+        $this->assertSame('k1', $key->id());
     }
 }

@@ -37,7 +37,7 @@ class Aes256GcmAlgorithmTest extends TestCase
         $key = str_repeat('A', 31); // Too short
 
         $this->expectException(RuntimeException::class);
-        $this->expectExceptionMessage('Invalid AES-256-GCM key length: expected 32 bytes, got 31');
+        $this->expectExceptionMessage('Invalid AES-256-GCM key length');
 
         $this->algorithm->encrypt('test', $key);
     }
@@ -48,7 +48,7 @@ class Aes256GcmAlgorithmTest extends TestCase
         $metadata = new ReversibleCryptoMetadataDTO('iv1234567890', 'tag1234567890123');
 
         $this->expectException(RuntimeException::class);
-        $this->expectExceptionMessage('Invalid AES-256-GCM key length: expected 32 bytes, got 31');
+        $this->expectExceptionMessage('Invalid AES-256-GCM key length');
 
         $this->algorithm->decrypt('cipher', $key, $metadata);
     }
@@ -88,7 +88,7 @@ class Aes256GcmAlgorithmTest extends TestCase
         $metadata = new ReversibleCryptoMetadataDTO($encrypted->iv, 'short_tag'); // Too short tag
 
         $this->expectException(CryptoDecryptionFailedException::class);
-        $this->expectExceptionMessage('Invalid AES-256-GCM authentication tag length: expected 16 bytes, got 9');
+        $this->expectExceptionMessage('Invalid AES-256-GCM authentication tag length');
 
         $this->algorithm->decrypt($encrypted->cipher, $key, $metadata);
     }

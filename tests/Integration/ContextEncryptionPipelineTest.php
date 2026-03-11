@@ -24,7 +24,7 @@ class ContextEncryptionPipelineTest extends TestCase
     {
         $keys = [
             new CryptoKeyDTO('key_v1', str_repeat('A', 32), KeyStatusEnum::ACTIVE, new \DateTimeImmutable()),
-            new CryptoKeyDTO('key_v2', str_repeat('A', 32), KeyStatusEnum::INACTIVE, new \DateTimeImmutable()), // Kept for decryption capability
+            new CryptoKeyDTO('key_v2', str_repeat('B', 32), KeyStatusEnum::INACTIVE, new \DateTimeImmutable()), // Kept for decryption capability
         ];
 
         $rotationService = new KeyRotationService(
