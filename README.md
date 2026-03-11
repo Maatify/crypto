@@ -1,5 +1,22 @@
 # Cryptography Module
 
+[![Latest Version](https://img.shields.io/packagist/v/maatify/crypto.svg?style=for-the-badge)](https://packagist.org/packages/maatify/crypto)
+[![PHP Version](https://img.shields.io/packagist/php-v/maatify/crypto.svg?style=for-the-badge)](https://packagist.org/packages/maatify/crypto)
+[![License](https://img.shields.io/packagist/l/maatify/crypto.svg?style=for-the-badge)](LICENSE)
+
+![PHPStan](https://img.shields.io/badge/PHPStan-Level%20Max-4E8CAE)
+
+[![Changelog](https://img.shields.io/badge/Changelog-View-blue)](CHANGELOG.md)
+[![Security](https://img.shields.io/badge/Security-Policy-important)](SECURITY.md)
+
+![Monthly Downloads](https://img.shields.io/packagist/dm/maatify/crypto?label=Monthly%20Downloads&color=00A8E8)
+![Total Downloads](https://img.shields.io/packagist/dt/maatify/crypto?label=Total%20Downloads&color=2AA9E0)
+
+![Security First](https://img.shields.io/badge/Security-Cryptography-darkred?style=for-the-badge)
+![Maatify Ecosystem](https://img.shields.io/badge/Maatify-Ecosystem-blueviolet?style=for-the-badge)
+
+[![Install](https://img.shields.io/badge/Install-composer%20require-blue?style=for-the-badge)](https://packagist.org/packages/maatify/crypto)
+
 ## 1. Overview
 
 This module is a **Security-First cryptographic system** providing a set of strict, isolated, and frozen cryptographic primitives. It is designed to be extracted as a standalone library, independent of any specific application framework.

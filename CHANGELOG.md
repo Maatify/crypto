@@ -13,4 +13,4 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **HKDF Key Derivation:** Cryptographically secure key derivation for domain separation based on explicit context strings (RFC 5869).
 - **Key Rotation:** Built-in support for key rotation, managing Active, Inactive, and Retired key states seamlessly.
 - **Crypto Context Providers (DX):** Developer Experience (DX) facade (`CryptoProvider`) to simplify wiring and ensure safe usage of HKDF and Reversible primitives.
-- **DI Container Bindings:** Standardized DI container registration via `CryptoBindings`.
+- **DI Container Bindings Example:** Standardized DI container registration via `CryptoModuleBindingsExample`.
