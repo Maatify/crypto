@@ -1,0 +1,37 @@
+# Dependencies
+/vendor/
+
+# Environment — NEVER commit real keys
+.env
+.env.local
+.env.*.local
+
+# DI compiled container
+/var/
+
+# PHPUnit
+/coverage/
+.phpunit.result.cache
+.phpunit.cache/
+
+# PHP-CS-Fixer
+.php-cs-fixer.cache
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+/logs/
+
+# Twig cache (if enabled in production)
+/var/cache/
+
+composer.lock
