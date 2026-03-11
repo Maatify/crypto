@@ -16,7 +16,10 @@ use PHPUnit\Framework\TestCase;
 class ReversibleCryptoServiceTest extends TestCase
 {
     private ReversibleCryptoAlgorithmRegistry $registry;
+
+    /** @var array<string, string> */
     private array $keys;
+
     private string $activeKeyId;
 
     protected function setUp(): void

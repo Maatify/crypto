@@ -46,7 +46,10 @@ class KeyRotationServiceTest extends TestCase
 
         // Setup raw provider to bypass constructor constraints
         $badProvider = new class($keys) implements \Maatify\Crypto\KeyRotation\KeyProviderInterface {
+            /** @var array<CryptoKeyDTO> */
             private array $keys;
+
+            /** @param array<CryptoKeyDTO> $keys */
             public function __construct(array $keys) { $this->keys = $keys; }
             public function all(): iterable { return $this->keys; }
             public function active(): \Maatify\Crypto\KeyRotation\CryptoKeyInterface { throw new \Maatify\Crypto\KeyRotation\Exceptions\NoActiveKeyException(); }
@@ -58,6 +61,7 @@ class KeyRotationServiceTest extends TestCase
         $result = $service->validate();
 
         $this->assertFalse($result->isValid);
+        $this->assertIsString($result->errorMessage);
         $this->assertStringContainsString('No ACTIVE key exists', $result->errorMessage);
     }
 

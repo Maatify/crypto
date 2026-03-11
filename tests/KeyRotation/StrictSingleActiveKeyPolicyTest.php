@@ -20,10 +20,16 @@ class StrictSingleActiveKeyPolicyTest extends TestCase
         $this->policy = new StrictSingleActiveKeyPolicy();
     }
 
+    /**
+     * @param array<CryptoKeyDTO> $keys
+     */
     private function createProvider(array $keys): \Maatify\Crypto\KeyRotation\KeyProviderInterface
     {
         return new class($keys) implements \Maatify\Crypto\KeyRotation\KeyProviderInterface {
+            /** @var array<CryptoKeyDTO> */
             private array $keys;
+
+            /** @param array<CryptoKeyDTO> $keys */
             public function __construct(array $keys) { $this->keys = $keys; }
             public function all(): iterable { return $this->keys; }
             public function active(): \Maatify\Crypto\KeyRotation\CryptoKeyInterface {

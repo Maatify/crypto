@@ -24,8 +24,11 @@ class Aes256GcmAlgorithmTest extends TestCase
         $key = str_repeat('A', 32);
         $result = $this->algorithm->encrypt('test', $key);
 
-        $this->assertSame(12, strlen($result->iv));
-        $this->assertSame(16, strlen($result->tag));
+        $this->assertIsString($result->iv);
+        $this->assertIsString($result->tag);
+
+        $this->assertSame(12, strlen((string) $result->iv));
+        $this->assertSame(16, strlen((string) $result->tag));
         $this->assertNotEmpty($result->cipher);
     }
 
